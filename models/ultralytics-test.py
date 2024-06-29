@@ -1,17 +1,20 @@
 import argparse
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import os
-
-# from sklearn.metrics import confusion_matrix, accuracy_score
+import seaborn as sns
+import pandas as pd
+from pretty_confusion_matrix import pp_matrix
 from ultralytics import YOLO
 
 # Define PY script folder
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 NUM_CLASSES = 3
+CLASS_NAMES = ['Galaxy', 'Nebula', 'Star Cluster']
 
 
-def get_category(category_id):
+def get_class(category_id):
     return {
         0: "Galaxy",
         1: "Nebula",
@@ -26,7 +29,7 @@ def draw_boxes(image, predictions, threshold=0.5):
 
         if confidence >= threshold:
             class_id = int(pred[5])
-            label = f'{get_category(class_id)}: {confidence:.2f}'
+            label = f'{get_class(class_id)}: {confidence:.2f}'
 
             # Draw bounding box
             x1, y1, x2, y2 = map(int, bbox)
@@ -129,46 +132,81 @@ def calculate_accuracy(true_positives, false_positives, false_negatives):
 
 
 # Function to create confusion matrix
-def create_confusion_matrix(ground_truth, predictions):
-    confusion_mat = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int32)
+def create_confusion_matrix(ground_truths, predictions, num_classes, iou_threshold=0.5):
+    # Initialize confusion matrix
+    confusion_matrix = np.zeros((num_classes, num_classes), dtype=int)
 
-    for pred in predictions:
-        pred_class = pred['class']
-        pred_bbox = pred['bbox']
-        pred_matched = False
+    for prediction in predictions:
+        path = prediction.path
+        basename = os.path.basename(path)
 
-        for gt in ground_truth:
-            gt_class = gt['class_id']
-            gt_bbox = gt['bbox']
+        matched_annotations = set()
 
-            iou = calculate_iou(pred_bbox, gt_bbox)
+        ground_truth = ground_truths[basename[:-4]]
+        boxes = prediction.boxes.data.cpu().numpy()
 
-            if iou >= iou_threshold and pred_class == gt_class:
-                confusion_mat[gt_class, pred_class] += 1
-                pred_matched = True
-                break
+        for box in boxes:
+            pred_bbox = box[:4]
+            pred_class = int(box[5])
+            pred_matched = False
 
-        if not pred_matched:
-            confusion_mat[0, pred_class] += 1  # False positive
+            for idx, gt in enumerate(ground_truth):
+                gt_bbox = gt['bbox']
+                gt_class = gt['class_id']
 
-    for gt in ground_truth:
-        gt_class = gt['class_id']
-        matched = False
+                iou = calculate_iou(pred_bbox, gt_bbox)
 
-        for pred in predictions:
-            pred_class = pred['class']
-            pred_bbox = pred['bbox']
+                if iou >= iou_threshold and \
+                   pred_class == gt_class and \
+                   idx not in matched_annotations:
+                    confusion_matrix[gt_class, pred_class] += 1
+                    pred_matched = True
+                    matched_annotations.add(idx)
+                    break
 
-            iou = calculate_iou(pred_bbox, gt_bbox)
+            if not pred_matched:
+                # False positive
+                confusion_matrix[num_classes - 1, pred_class] += 1
 
-            if iou >= iou_threshold and pred_class == gt_class:
-                matched = True
-                break
+        for idx, gt in enumerate(ground_truth):
+            if idx not in matched_annotations:
+                # False negative
+                confusion_matrix[gt['class_id'], num_classes - 1] += 1
 
-        if not matched:
-            confusion_mat[gt_class, 0] += 1  # False negative
+    return confusion_matrix
 
-    return confusion_mat
+
+def plot_confusion_matrix(confusion_matrix, class_names):
+    df_cm = pd.DataFrame(
+        confusion_matrix,
+        index=class_names,
+        columns=class_names
+    )
+    print(df_cm)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(
+        df_cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=class_names,
+        yticklabels=class_names,
+        annot_kws={"size": 12}
+    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title("Confusion Matrix")
+    plt.tick_params(
+        axis='both',
+        which='major',
+        labelsize=10,
+        labelbottom=False,
+        bottom=False,
+        top=False,
+        labeltop=True
+    )
+    plt.xticks(rotation=45)
+    plt.show()
 
 
 # Function to calculate Intersection over Union (IoU)
@@ -261,10 +299,17 @@ def main(args):
     print(f"F1 Score: {f1_score:.4f}")
 
     # Create confusion matrix
-    # confusion_mat = create_confusion_matrix(ground_truth, predictions)
+    cm = create_confusion_matrix(
+        ground_truths,
+        predictions,
+        NUM_CLASSES + 1
+    )
 
-    # print("Confusion Matrix:")
-    # print(confusion_mat)
+    print("Confusion Matrix:")
+    # print(cm)
+    # cmap = 'PuRd'
+    # pp_matrix(df_cm, cmap=cmap)
+    plot_confusion_matrix(cm, CLASS_NAMES + ['background'])
 
 
 if __name__ == '__main__':
