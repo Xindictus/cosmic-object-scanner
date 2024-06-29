@@ -67,7 +67,7 @@ def training_loop(loader, model, optimizer, loss_fn, scaler, scaled_anchors):
   
     # Iterating over the training data 
     for _, (x, y) in enumerate(progress_bar): 
-        x = x.to(device) 
+        x = x.to(device)
         y0, y1, y2 = ( 
             y[0].to(device), 
             y[1].to(device), 
@@ -102,3 +102,26 @@ def training_loop(loader, model, optimizer, loss_fn, scaler, scaled_anchors):
         # update progress bar with loss 
         mean_loss = sum(losses) / len(losses) 
         progress_bar.set_postfix(loss=mean_loss)
+
+    return(mean_loss)
+
+def evaluate(loader, model, loss_fn, scaled_anchors):
+    model.eval()
+    losses = []
+    correct = 0
+    total = 0
+  
+    with torch.no_grad():
+        for x, y in loader:
+            x = x.to(device)
+            y0, y1, y2 = y[0].to(device), y[1].to(device), y[2].to(device)
+            outputs = model(x)
+            loss = ( 
+                loss_fn(outputs[0], y0, scaled_anchors[0]) + 
+                loss_fn(outputs[1], y1, scaled_anchors[1]) + 
+                loss_fn(outputs[2], y2, scaled_anchors[2])
+            )
+            losses.append(loss.item())
+
+    model.train()
+    return sum(losses) / len(losses)

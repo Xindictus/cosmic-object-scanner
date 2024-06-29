@@ -59,9 +59,11 @@ def iou(box1, box2, is_pred=True):
         return iou_score
     
 def nms(bboxes, iou_threshold, threshold): 
+    print("BOXES!")
+    print("LEN: ",len(bboxes))
     # Filter out bounding boxes with confidence below the threshold. 
     bboxes = [box for box in bboxes if box[1] > threshold] 
-  
+    print("LEN: ",len(bboxes))
     # Sort the bounding boxes by confidence in descending order. 
     bboxes = sorted(bboxes, key=lambda x: x[1], reverse=True) 
   
@@ -87,6 +89,7 @@ def nms(bboxes, iou_threshold, threshold):
                     bboxes_nms.append(box) 
   
     # Return bounding boxes after non-maximum suppression. 
+    print("LEN:", len(bboxes_nms))
     return bboxes_nms
 
 def convert_cells_to_bboxes(predictions, anchors, s, is_predictions=True): 

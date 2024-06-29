@@ -13,7 +13,7 @@ import cv2
 class Dataset(torch.utils.data.Dataset): 
 	def __init__( 
 		self, csv_file, image_dir, label_dir, anchors, 
-		image_size=608, grid_sizes=[13, 26, 52], 
+		image_size=608, grid_sizes=[19, 38, 76], 
 		num_classes=3, transform=None
 	): 
 		# Read the csv file with image names and labels 
@@ -56,13 +56,14 @@ class Dataset(torch.utils.data.Dataset):
 
 		# Albumentations augmentations 
 		if self.transform: 
+			if bboxes is None:
+				bboxes = []
 			if len(bboxes) == 0:
-				augs = self.transform(image=image)
+				augs = self.transform(image=image,bboxes=bboxes)
 			else:
-				augs = self.transform(image=image, bboxes=bboxes) 
-			image = augs["image"] 
-			if len(bboxes) > 0:
-				bboxes = augs["bboxes"] 
+				augs = self.transform(image=image, bboxes=bboxes)
+				bboxes = augs["bboxes"]
+			image = augs["image"]
 
 		# Below assumes 3 scale predictions (as paper) and same num of anchors per scale 
 		# target : [probabilities, x, y, width, height, class_label] 
