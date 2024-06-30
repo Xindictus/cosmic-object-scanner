@@ -2,7 +2,7 @@ import torch
 
 # Device 
 #TODO: CHANGE MPS
-device = 'cpu'
+device = 'cuda'
   
 # Load and save model variable 
 load_model = False
