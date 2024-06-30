@@ -5,10 +5,6 @@ from PIL import Image
 from pycocotools.coco import COCO
 
 
-# Define PY script folder
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-
-
 class CocoDataset(torch.utils.data.Dataset):
     def __init__(self, root, annotation, transforms=None):
         self.root = root

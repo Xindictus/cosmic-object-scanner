@@ -164,3 +164,6 @@ og/labels/
 voc/
 model_from_stratch/yolo/checkpoint.pth.tar
 .DS_Store
+*.jpg
+*.txt
+*.pt
