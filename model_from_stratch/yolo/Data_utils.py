@@ -9,6 +9,16 @@ from utils import *
 from constants import *
 import cv2
 
+def normalize_coordinates(coords):
+    # Ensure the first four values are within the range [0, 1]
+    for i in range(4):
+        if coords[i] > 1:
+            coords[i] = 1
+    return coords
+
+
+
+
 # Create a dataset class to load the images and labels from the folder 
 class Dataset(torch.utils.data.Dataset): 
 	def __init__( 
@@ -48,10 +58,12 @@ class Dataset(torch.utils.data.Dataset):
 		label_path = os.path.join(self.label_dir, self.label_list.iloc[idx, 1]) 
 		# We are applying roll to move class label to the last column 
 		# 5 columns: x, y, width, height, class_label 
-		bboxes = np.roll(np.loadtxt(fname=label_path, 
+		initial_bboxes = np.roll(np.loadtxt(fname=label_path, 
 						delimiter=" ", ndmin=2), 4, axis=1).tolist() 
+		# Normalize the coordinates
+		normalized_bboxes = [normalize_coordinates(bbox) for bbox in initial_bboxes]
 		labels = []
-		for box in bboxes:
+		for box in normalized_bboxes:
 			label = box[-1]  # Get the last element of the current subarray
 			labels.append(label)
 		# Getting the image path 
@@ -60,13 +72,13 @@ class Dataset(torch.utils.data.Dataset):
 
 		# Albumentations augmentations 
 		if self.transform: 
-			if bboxes is None:
-				bboxes = []
-			if len(bboxes) == 0:
-				augs = self.transform(image=image,bboxes=bboxes)
+			if normalized_bboxes is None:
+				normalized_bboxes = []
+			if len(normalized_bboxes) == 0:
+				augs = self.transform(image=image,bboxes=normalized_bboxes)
 			else:
-				augs = self.transform(image=image, bboxes=bboxes)
-				bboxes = augs["bboxes"]
+				augs = self.transform(image=image, bboxes=normalized_bboxes)
+				normalized_bboxes = augs["bboxes"]
 			image = augs["image"]
 
 		# Below assumes 3 scale predictions (as paper) and same num of anchors per scale 
@@ -75,7 +87,7 @@ class Dataset(torch.utils.data.Dataset):
 				for s in self.grid_sizes] 
 		
 		# Identify anchor box and cell for each bounding box 
-		for box in bboxes: 
+		for box in normalized_bboxes: 
 			# Calculate iou of bounding box with anchor boxes 
 			iou_anchors = iou(torch.tensor(box[2:4]), 
 							self.anchors, 

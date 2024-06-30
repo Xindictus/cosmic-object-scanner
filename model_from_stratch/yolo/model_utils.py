@@ -197,4 +197,6 @@ def test_model(test_loader, model, device):
         if len(y_true) != len(y_pred):
             print("ERROR!")
             break
+            
+        break
     return y_true, y_pred
