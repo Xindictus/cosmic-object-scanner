@@ -2,7 +2,7 @@ import torch
 
 # Device 
 #TODO: CHANGE MPS
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = 'cuda'
   
 # Load and save model variable 
 load_model = False

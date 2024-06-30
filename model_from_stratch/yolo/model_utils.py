@@ -3,6 +3,7 @@ import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from utils import *
+import math
 
 class YOLOLoss(nn.Module): 
     def __init__(self): 
@@ -108,8 +109,6 @@ def training_loop(loader, model, optimizer, loss_fn, scaler, scaled_anchors):
 def evaluate(loader, model, loss_fn, scaled_anchors):
     model.eval()
     losses = []
-    correct = 0
-    total = 0
   
     with torch.no_grad():
         for x, y in loader:
@@ -124,4 +123,5 @@ def evaluate(loader, model, loss_fn, scaled_anchors):
             losses.append(loss.item())
 
     model.train()
-    return sum(losses) / len(losses)
+    filtered_losses = [x for x in losses if not math.isnan(x)]
+    return sum(filtered_losses) / len(filtered_losses)
