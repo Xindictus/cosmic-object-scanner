@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import sys
 import torch
 import torch.optim as optim
 import torch.utils as utils
@@ -18,19 +17,15 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchsummary import summary
 from visualization import visualize_prediction_v2
 
-# Increase recursion limit
-sys.setrecursionlimit(10000)
 
 # Define PY script folder
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 ANNOTATIONS_TRAIN_PATH = f'{CURRENT_DIR}/../data/coco/train/result.json'
-ANNOTATIONS_VAL_PATH = f'{CURRENT_DIR}/../data/coco/val/result.json'
 ANNOTATIONS_TEST_PATH = f'{CURRENT_DIR}/../data/coco/test/result.json'
 IMG_TRAIN_PATH = f'{CURRENT_DIR}/../data/coco/train'
-IMG_VAL_PATH = f'{CURRENT_DIR}/../data/coco/val'
 IMG_TEST_PATH = f'{CURRENT_DIR}/../data/coco/test'
-EPOCHS = 10
-BATCH_SIZE = 32
+EPOCHS = 1
+BATCH_SIZE = 2
 MODEL_PATH = f'{CURRENT_DIR}/fasterrcnn_resnet50_fpn_{EPOCHS}_{BATCH_SIZE}.pth'
 CLASS_NAMES = ['Galaxy', 'Nebula', 'Star Cluster']
 
@@ -393,8 +388,8 @@ def main():
         print(train_losses)
 
     test_dataset = CocoDataset(
-        IMG_VAL_PATH,
-        ANNOTATIONS_VAL_PATH,
+        IMG_TEST_PATH,
+        ANNOTATIONS_TEST_PATH,
         transforms.Compose([
             transforms.ToTensor()
         ])
