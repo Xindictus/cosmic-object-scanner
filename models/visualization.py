@@ -1,19 +1,34 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from PIL import Image
+def get_category_names():
+    return {
+        0: "Galaxy",
+        1: "Nebula",
+        2: "Star Cluster"
+    }
 
 
 # Function to visualize the bounding boxes
-def visualize_prediction(image, prediction, threshold=0.5):
+def visualize_ultralytics(
+    image,
+    prediction,
+    threshold=0.5,
+    category_names=None
+):
+    if category_names is None:
+        category_names = get_category_names()
+
     plt.figure(figsize=(12, 8))
     plt.imshow(image)
     ax = plt.gca()
 
-    boxes = prediction[0]['boxes'].cpu().numpy()
-    scores = prediction[0]['scores'].cpu().numpy()
+    boxes = prediction[0].boxes.data.cpu().numpy()
+    scores = boxes[:, 4]
+    labels = boxes[:, 5].astype(int)
+    boxes = boxes[:, :4]
 
-    for box, score in zip(boxes, scores):
+    for box, score, label in zip(boxes, scores, labels):
         if score > threshold:
             xmin, ymin, xmax, ymax = box
             width, height = xmax - xmin, ymax - ymin
@@ -23,10 +38,22 @@ def visualize_prediction(image, prediction, threshold=0.5):
                 height,
                 linewidth=2,
                 edgecolor='r',
-                facecolor='none'
+                facecolor='none',
             )
             ax.add_patch(rect)
 
+            if category_names:
+                label_name = category_names.get(label, f'Label {label}')
+                ax.text(
+                    xmin,
+                    ymin - 10,
+                    label_name,
+                    color='red',
+                    fontsize=12,
+                    bbox=dict(facecolor='yellow', alpha=0.5)
+                )
+
+    plt.axis('off')
     plt.show()
 
 
@@ -34,7 +61,7 @@ def visualize_prediction_v2(
     image,
     prediction,
     threshold=0.5,
-    category_names=None
+    category_names=get_category_names()
 ):
     plt.figure(figsize=(12, 8))
     plt.imshow(image)
