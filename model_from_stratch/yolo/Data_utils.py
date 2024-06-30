@@ -50,6 +50,10 @@ class Dataset(torch.utils.data.Dataset):
 		# 5 columns: x, y, width, height, class_label 
 		bboxes = np.roll(np.loadtxt(fname=label_path, 
 						delimiter=" ", ndmin=2), 4, axis=1).tolist() 
+		labels = []
+		for box in bboxes:
+			label = box[-1]  # Get the last element of the current subarray
+			labels.append(label)
 		# Getting the image path 
 		img_path = os.path.join(self.image_dir, self.label_list.iloc[idx, 0]) 
 		image = np.array(Image.open(img_path).convert("RGB")) 
@@ -130,7 +134,7 @@ class Dataset(torch.utils.data.Dataset):
 					targets[scale_idx][anchor_on_scale, i, j, 0] = -1
 
 		# Return the image and the target 
-		return image, tuple(targets)
+		return image, tuple(targets), labels
 
 
     

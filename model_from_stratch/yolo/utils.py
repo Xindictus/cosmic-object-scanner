@@ -59,11 +59,8 @@ def iou(box1, box2, is_pred=True):
         return iou_score
     
 def nms(bboxes, iou_threshold, threshold): 
-    print("BOXES!")
-    print("LEN: ",len(bboxes))
     # Filter out bounding boxes with confidence below the threshold. 
     bboxes = [box for box in bboxes if box[1] > threshold] 
-    print("LEN: ",len(bboxes))
     # Sort the bounding boxes by confidence in descending order. 
     bboxes = sorted(bboxes, key=lambda x: x[1], reverse=True) 
   
@@ -89,7 +86,6 @@ def nms(bboxes, iou_threshold, threshold):
                     bboxes_nms.append(box) 
   
     # Return bounding boxes after non-maximum suppression. 
-    print("LEN:", len(bboxes_nms))
     return bboxes_nms
 
 def convert_cells_to_bboxes(predictions, anchors, s, is_predictions=True): 
@@ -139,7 +135,78 @@ def convert_cells_to_bboxes(predictions, anchors, s, is_predictions=True):
     # Returning the reshaped and converted bounding box list 
     return converted_bboxes.tolist()
 
-def plot_image(image, boxes): 
+def keep_prominent_boxes(boxes, iou_threshold, count_threshold):
+    if len(boxes) == 0:
+        return []
+
+    # Convert boxes to numpy array for easier manipulation
+    boxes = np.array(boxes)
+    
+    # Extract coordinates and scores
+    x1 = boxes[:, 2] - boxes[:, 4] / 2
+    y1 = boxes[:, 3] - boxes[:, 5] / 2
+    x2 = boxes[:, 2] + boxes[:, 4] / 2
+    y2 = boxes[:, 3] + boxes[:, 5] / 2
+    labels = boxes[:, 0]
+
+    # Initialize list of kept boxes
+    kept_boxes = []
+
+    while len(boxes) > 0:
+        # Pick the first box
+        current_box = boxes[0]
+        current_label = labels[0]
+        
+        current_x1 = x1[0]
+        current_y1 = y1[0]
+        current_x2 = x2[0]
+        current_y2 = y2[0]
+        
+        # Calculate IoU of the picked box with the rest
+        rest_x1 = x1[1:]
+        rest_y1 = y1[1:]
+        rest_x2 = x2[1:]
+        rest_y2 = y2[1:]
+        rest_labels = labels[1:]
+        
+        # Calculate the intersection areas
+        inter_x1 = np.maximum(current_x1, rest_x1)
+        inter_y1 = np.maximum(current_y1, rest_y1)
+        inter_x2 = np.minimum(current_x2, rest_x2)
+        inter_y2 = np.minimum(current_y2, rest_y2)
+        
+        inter_area = np.maximum(0, inter_x2 - inter_x1) * np.maximum(0, inter_y2 - inter_y1)
+        
+        # Calculate the union areas
+        current_area = (current_x2 - current_x1) * (current_y2 - current_y1)
+        rest_area = (rest_x2 - rest_x1) * (rest_y2 - rest_y1)
+        
+        union_area = current_area + rest_area - inter_area
+        
+        # Calculate IoU
+        iou = inter_area / union_area
+        
+        # Find boxes with IoU greater than threshold and the same label
+        similar_boxes_mask = (iou >= iou_threshold) & (rest_labels == current_label)
+        similar_boxes_count = np.sum(similar_boxes_mask)
+        
+        if similar_boxes_count >= count_threshold:
+            kept_boxes.append(current_box)
+        
+        # Remove the processed box and the similar boxes
+        boxes = boxes[1:][~similar_boxes_mask]
+        x1 = x1[1:][~similar_boxes_mask]
+        y1 = y1[1:][~similar_boxes_mask]
+        x2 = x2[1:][~similar_boxes_mask]
+        y2 = y2[1:][~similar_boxes_mask]
+        labels = labels[1:][~similar_boxes_mask]
+    
+    return np.array(kept_boxes)
+
+def plot_image(image, boxes, class_labels, iou_threshold=0.5, count_threshold=5):
+    # Apply the prominent boxes logic to filter boxes
+    filtered_boxes = keep_prominent_boxes(boxes, iou_threshold, count_threshold)
+
     # Getting the color map from matplotlib 
     colour_map = plt.get_cmap("tab20b") 
     # Getting 20 different colors from the color map for 20 different classes 
@@ -157,7 +224,7 @@ def plot_image(image, boxes):
     ax.imshow(img) 
   
     # Plotting the bounding boxes and labels over the image 
-    for box in boxes: 
+    for box in filtered_boxes: 
         # Get the class from the box 
         class_pred = box[0] 
         # Get the center x and y coordinates 
@@ -190,7 +257,9 @@ def plot_image(image, boxes):
         ) 
   
     # Display the plot 
+    plt.axis('off')
     plt.show()
+    return filtered_boxes
 
 def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"): 
     print("==> Saving checkpoint") 

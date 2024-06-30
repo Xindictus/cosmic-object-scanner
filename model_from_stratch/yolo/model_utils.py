@@ -111,7 +111,7 @@ def evaluate(loader, model, loss_fn, scaled_anchors):
     losses = []
   
     with torch.no_grad():
-        for x, y in loader:
+        for x, y, _ in loader:
             x = x.to(device)
             y0, y1, y2 = y[0].to(device), y[1].to(device), y[2].to(device)
             outputs = model(x)
@@ -125,3 +125,76 @@ def evaluate(loader, model, loss_fn, scaled_anchors):
     model.train()
     filtered_losses = [x for x in losses if not math.isnan(x)]
     return sum(filtered_losses) / len(filtered_losses)
+
+
+def test_model(test_loader, model, device):
+  
+    y_true = []
+    y_pred = []
+    #Getting a sample image from the test data loader 
+    for x, y, labels in iter(test_loader):
+        x = x.to(device) 
+    
+        model.eval() 
+        with torch.no_grad(): 
+            # Getting the model predictions 
+            output = model(x) 
+            # Getting the bounding boxes from the predictions 
+            bboxes = [[] for _ in range(x.shape[0])] 
+            true_boxes = [[] for _ in range(x.shape[0])]
+            anchors = ( 
+                    torch.tensor(ANCHORS) 
+                        * torch.tensor(s).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2) 
+                    ).to(device) 
+        
+            # Getting bounding boxes for each scale 
+            for i in range(3): 
+                batch_size, A, S, _, _ = output[i].shape 
+                anchor = anchors[i] 
+                boxes_scale_i = convert_cells_to_bboxes( 
+                                    output[i], anchor, s=S, is_predictions=True
+                                )
+                for idx, (box) in enumerate(boxes_scale_i): 
+                    bboxes[idx] += box
+
+        # Plotting the image with bounding boxes for each image in the batch 
+        # Applying non-max suppression to remove overlapping bounding boxes 
+        nms_boxes = nms(bboxes[0], iou_threshold=0.9, threshold=0.8) 
+        # Plotting the image with bounding boxes 
+        final_preds = keep_prominent_boxes(nms_boxes, 0.5, 1)
+
+        final_preds = np.array(final_preds)
+        if final_preds.size == 0:
+            # Handle empty array case
+            final_preds = []
+        elif final_preds.ndim == 2 and final_preds.shape[1] > 0:
+            # Extract the first element of each sublist and convert to integers
+            final_preds = final_preds[:, 0].astype(int).tolist()
+        else:
+            # Handle case where array might not be 2D or might not have sublists
+            final_preds = []
+        
+        labels_len = len(labels)
+        preds_len = len(final_preds)
+        
+        for i in range(labels_len):
+            labels[i] = int(labels[i][0])
+        
+        if labels_len == 0:
+            labels = [-1]
+            labels_len = 1
+        
+        if labels_len < preds_len:
+            final_preds = final_preds[:labels_len]
+        elif labels_len > preds_len:
+             ext_len = labels_len - preds_len
+             final_preds.extend([-1] * ext_len)
+        
+        y_true.extend(labels)
+        y_pred.extend(final_preds)
+
+
+        if len(y_true) != len(y_pred):
+            print("ERROR!")
+            break
+    return y_true, y_pred
