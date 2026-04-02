@@ -1,0 +1,96 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        exclude: "^(data/|models/|experimental/)"
+      - id: end-of-file-fixer
+        name: Fix end of file
+        exclude: "^(data/|models/|experimental/)"
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: ["--maxkb=1000"]
+      - id: detect-private-key
+        name: Detect private keys
+      - id: mixed-line-ending
+        name: Check mixed line endings
+        args: ["--fix=lf"]
+
+  # Ruff: Fast Python linter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.8
+    hooks:
+      - id: ruff
+        name: Ruff linting
+        args: ["--fix"]
+        exclude: "^(data/|models/|experimental/)"
+      - id: ruff-format
+        name: Ruff formatting
+        exclude: "^(data/|models/|experimental/)"
+
+  # Black: Code formatter
+  - repo: https://github.com/psf/black
+    rev: 23.12.0
+    hooks:
+      - id: black
+        name: Black formatting
+        language_version: python3.12
+        exclude: "^(data/|models/|experimental/)"
+
+  # isort: Import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort import sorting
+        args: ["--profile", "black", "--line-length", "100"]
+        exclude: "^(data/|models/|experimental/)"
+
+  # MyPy: Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: MyPy type checking
+        args: ["--strict", "--no-implicit-optional", "--warn-unused-configs"]
+        additional_dependencies:
+          [
+            "types-requests",
+            "types-PyYAML",
+            "torch",
+            "torchvision",
+            "tensorflow",
+          ]
+        exclude: "^(tests/|data/|models/|experimental/)"
+        language_version: python3.12
+
+  # YAML/TOML validation
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.14
+    hooks:
+      - id: validate-pyproject
+        name: Validate pyproject.toml
+
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

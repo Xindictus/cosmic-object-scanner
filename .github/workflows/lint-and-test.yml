@@ -1,0 +1,96 @@
+name: Lint, Type Check, Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Install dependencies and dev tools
+        run: |
+          uv sync --dev
+
+      - name: Ruff linting
+        run: |
+          uv run ruff check src/ tests/
+
+      - name: Black formatting check
+        run: |
+          uv run black --check src/ tests/
+
+      - name: isort import check
+        run: |
+          uv run isort --check-only src/ tests/
+
+      - name: MyPy type checking (strict)
+        run: |
+          uv run mypy src/ --strict
+        continue-on-error: false
+
+      - name: Run tests
+        run: |
+          uv run pytest tests/ -v --strict-markers
+        continue-on-error: false
+
+      - name: Generate coverage report
+        run: |
+          uv run pytest tests/ --cov=src/cosmic_object_scanner --cov-report=xml --cov-report=term-missing
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+  optional-validation:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'validate-model') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Validate model loading
+        run: |
+          uv run python -c "
+          try:
+              from cosmic_object_scanner.models import fasterrcnn_resnet50_fpn
+              print('✓ Model imports successful')
+          except Exception as e:
+              print(f'✗ Model import failed: {e}')
+              exit(1)
+          "
+        continue-on-error: true
