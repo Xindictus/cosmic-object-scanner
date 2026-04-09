@@ -48,7 +48,7 @@ uv run black --check src/
   - Ultralytics YOLOv8 (PyTorch)
   - TensorFlow hybrid model (Classifier + BBox Regressor)
 - **COCO Format Support**: Full integration with COCOEval metrics
-- **Production-Ready**: Type hints, 60%+ test coverage, pre-commit hooks, CI/CD pipeline
+- **Production-Ready**: Type hints, strict mypy, pre-commit hooks, CI/CD pipeline
 - **Advanced Data Augmentation**: Albumentations-based transformations
 
 ## 📊 Dataset Overview
@@ -83,7 +83,7 @@ uv run python src/cosmic_object_scanner/models/fasterrcnn_resnet50_fpn.py
 ### Running YOLO (Ultralytics)
 
 ```bash
-uv run python src/cosmic_object_scanner/models/ultralytics-yolo.py
+uv run python src/cosmic_object_scanner/models/ultralytics_yolo.py
 ```
 
 ### Data Processing
@@ -142,17 +142,18 @@ cosmic-object-scanner/
 ├── src/cosmic_object_scanner/
 │   ├── models/                    # PyTorch models & training
 │   ├── custom_implementations/    # TensorFlow & scratch implementations
-│   ├── data/                      # Dataset utilities
-│   └── utils/                     # Shared utilities
+│   └── data/                      # Dataset utilities
 ├── tests/                         # Unit & integration tests
-├── scripts/                       # Standalone training/inference scripts
+│   ├── custom_implementations/    # TF & scratch model tests
+│   ├── models/                    # PyTorch model tests
+│   └── data/                      # Data utility tests
 ├── docs/                          # Documentation
 │   ├── ARCHITECTURE.md            # Code structure
 │   ├── MODELS.md                  # Model details
 │   ├── DATASET.md                 # Dataset information
 │   ├── EVALUATION.md              # Results & metrics
 │   └── DEV_GUIDE.md               # Development guide
-├── experimental/                  # Experimental notebooks & code
+├── experimental/                  # Experimental notebooks & data
 ├── pyproject.toml                 # UV + tool configuration
 └── .pre-commit-config.yaml        # Git hooks
 ```
@@ -198,7 +199,7 @@ uv run pytest tests/ -m "not slow" -v
 - **Type Hints**: All public functions require type hints (mypy strict mode)
 - **Linting**: Ruff enforces PEP8 and best practices
 - **Formatting**: Black for consistent style (line length: 100)
-- **Testing**: Minimum 60% coverage (target: 80%)
+- **Testing**: pytest with coverage tracking (target: 80%)
 - **Pre-commit**: Blocks commits with violations
 
 ### Common Tasks

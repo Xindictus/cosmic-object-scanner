@@ -205,7 +205,7 @@ class TestMyModel:
             model(torch.randn(2, 1, 256, 256))  # Wrong channels
 ```
 
-**Coverage**: All public functions should have tests. Minimum coverage: 60%, target: 80%.
+**Coverage**: All public functions should have tests. Target coverage: 80%.
 
 ```bash
 # Run tests with coverage report
@@ -316,9 +316,6 @@ uv run python src/cosmic_object_scanner/models/fasterrcnn_resnet50_fpn.py
 # Log results
 # Edit script to save metrics to CSV:
 # results.csv, learning_curves/, checkpoints/
-
-# Compare results
-python scripts/compare_results.py results_v1.csv results_v2.csv
 ```
 
 ### Debugging

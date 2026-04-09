@@ -1,6 +1,11 @@
-# Device
-# TODO: CHANGE MPS
-device = "cuda"
+"""Model constants."""
+
+import torch
+
+# Device: automatically selects CUDA > MPS > CPU
+device: str = (
+    "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+)
 
 # Load and save model variable
 load_model = False
@@ -21,12 +26,11 @@ ANCHORS = [
 batch_size = 32
 
 # Learning rate for training
-leanring_rate = 1e-5
+learning_rate = 1e-5
 
 # Number of epochs for training
 epochs = 20
 
-# TODO: CHANGE IMAGE SIZE
 # Image size
 image_size = 608
 

@@ -34,8 +34,8 @@ def main() -> None:
 
     # Plot the breakdown of classes
     plt.figure(figsize=(10, 6))
-    colors = plt.cm.viridis(np.linspace(0, 1, len(class_counts)))
-    plt.bar(class_counts.keys(), class_counts.values(), color=colors)
+    colors = plt.cm.get_cmap("viridis")(np.linspace(0, 1, len(class_counts)))
+    plt.bar(list(class_counts.keys()), list(class_counts.values()), color=colors)
     plt.xlabel("Class")
     plt.ylabel("Number of annotations")
     plt.title("Breakdown of Classes in Dataset")

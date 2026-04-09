@@ -40,7 +40,7 @@ def visualize_ultralytics(
     labels = boxes[:, 5].astype(int)
     boxes = boxes[:, :4]
 
-    for box, score, label in zip(boxes, scores, labels):
+    for box, score, label in zip(boxes, scores, labels, strict=False):
         if score > threshold:
             xmin, ymin, xmax, ymax = box
             width, height = xmax - xmin, ymax - ymin
@@ -62,7 +62,7 @@ def visualize_ultralytics(
                     label_name,
                     color="red",
                     fontsize=12,
-                    bbox=dict(facecolor="yellow", alpha=0.5),
+                    bbox={"facecolor": "yellow", "alpha": 0.5},
                 )
 
     plt.axis("off")
@@ -95,7 +95,7 @@ def visualize_prediction_v2(
     print(scores)
     # print(labels)
 
-    for box, score, label in zip(boxes, scores, labels):
+    for box, score, label in zip(boxes, scores, labels, strict=False):
         if score > threshold:
             xmin, ymin, xmax, ymax = box
             width, height = xmax - xmin, ymax - ymin
@@ -117,7 +117,7 @@ def visualize_prediction_v2(
                     label_name,
                     color="red",
                     fontsize=12,
-                    bbox=dict(facecolor="yellow", alpha=0.5),
+                    bbox={"facecolor": "yellow", "alpha": 0.5},
                 )
 
     plt.axis("off")

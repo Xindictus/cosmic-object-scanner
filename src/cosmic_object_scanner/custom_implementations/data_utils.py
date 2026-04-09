@@ -1,7 +1,9 @@
+"""Data utilities for dataset preparation."""
+
 import os
 from typing import Any
 
-import albumentations as A
+import albumentations as A  # noqa: N812
 import cv2
 import numpy as np
 import pandas as pd
@@ -13,7 +15,15 @@ from cosmic_object_scanner.custom_implementations.constants import image_size
 from cosmic_object_scanner.custom_implementations.utils import iou
 
 
-def normalize_coordinates(coords):
+def normalize_coordinates(coords: list[float]) -> list[float]:
+    """Normalize bounding box coordinates to [0, 1] range.
+
+    Args:
+        coords: Bounding box coordinates to normalize.
+
+    Returns:
+        Normalized coordinates with max value of 1.0.
+    """
     # Ensure the first four values are within the range [0, 1]
     for i in range(4):
         if coords[i] > 1:
@@ -22,7 +32,7 @@ def normalize_coordinates(coords):
 
 
 # Create a dataset class to load the images and labels from the folder
-class Dataset(torch.utils.data.Dataset):
+class Dataset(torch.utils.data.Dataset[tuple[torch.Tensor, tuple[Any, ...], list[Any]]]):
     def __init__(
         self,
         csv_file: str,
@@ -33,7 +43,7 @@ class Dataset(torch.utils.data.Dataset):
         grid_sizes: Any = None,
         num_classes: int = 3,
         transform: Any = None,
-    ):
+    ) -> None:
         if grid_sizes is None:
             grid_sizes = [19, 38, 76]
         # Read the csv file with image names and labels
@@ -58,10 +68,10 @@ class Dataset(torch.utils.data.Dataset):
         # Ignore IoU threshold
         self.ignore_iou_thresh = 0.5
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.label_list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, tuple[Any, ...], list[Any]]:
         # Getting the label path
         label_path = os.path.join(self.label_dir, self.label_list.iloc[idx, 1])
         # We are applying roll to move class label to the last column
@@ -81,12 +91,8 @@ class Dataset(torch.utils.data.Dataset):
 
         # Albumentations augmentations
         if self.transform:
-            if normalized_bboxes is None:
-                normalized_bboxes = []
-            if len(normalized_bboxes) == 0:
-                augs = self.transform(image=image, bboxes=normalized_bboxes)
-            else:
-                augs = self.transform(image=image, bboxes=normalized_bboxes)
+            augs = self.transform(image=image, bboxes=normalized_bboxes)
+            if len(normalized_bboxes) > 0:
                 normalized_bboxes = augs["bboxes"]
             image = augs["image"]
 
@@ -148,7 +154,8 @@ class Dataset(torch.utils.data.Dataset):
                     targets[scale_idx][anchor_on_scale, i, j, 0] = -1
 
         # Return the image and the target
-        return image, tuple(targets), labels
+        image_tensor = torch.as_tensor(image, dtype=torch.float32).permute(2, 0, 1)
+        return image_tensor, tuple(targets), labels
 
 
 # Transform for training

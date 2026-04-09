@@ -112,7 +112,7 @@ def reduce_dict(input_dict: dict[str, Any], average: bool = True) -> dict[str, A
         dist.all_reduce(values_tensor)
         if average:
             values_tensor /= world_size
-        reduced_dict = {k: v for k, v in zip(names, values_tensor)}
+        reduced_dict = dict(zip(names, values_tensor, strict=False))
     return reduced_dict
 
 
@@ -125,7 +125,7 @@ class MetricLogger:
         for k, v in kwargs.items():
             if isinstance(v, torch.Tensor):
                 v = v.item()
-            assert isinstance(v, (float, int))
+            assert isinstance(v, float | int)
             self.meters[k].update(v)
 
     def __getattr__(self, attr: str) -> Any:
@@ -151,7 +151,6 @@ class MetricLogger:
     def log_every(
         self, iterable: Sequence[Any], print_freq: int, header: str | None = None
     ) -> Generator[Any, None, None]:
-        i = 0
         if not header:
             header = ""
         start_time = time.time()
@@ -182,8 +181,8 @@ class MetricLogger:
                     "data: {data}",
                 ]
             )
-        MB = 1024.0 * 1024.0
-        for obj in iterable:
+        mb = 1024.0 * 1024.0
+        for i, obj in enumerate(iterable):
             data_time.update(time.time() - end)
             yield obj
             iter_time.update(time.time() - end)
@@ -199,7 +198,7 @@ class MetricLogger:
                             meters=str(self),
                             time=str(iter_time),
                             data=str(data_time),
-                            memory=torch.cuda.max_memory_allocated() / MB,
+                            memory=torch.cuda.max_memory_allocated() / mb,
                         )
                     )
                 else:
@@ -213,7 +212,6 @@ class MetricLogger:
                             data=str(data_time),
                         )
                     )
-            i += 1
             end = time.time()
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -221,7 +219,7 @@ class MetricLogger:
 
 
 def collate_fn(batch: list[tuple[Any, ...]]) -> tuple[tuple[Any, ...], ...]:
-    return tuple(zip(*batch))
+    return tuple(zip(*batch, strict=False))
 
 
 def mkdir(path: str) -> None:
@@ -251,9 +249,7 @@ def setup_for_distributed(is_master: bool) -> None:
 def is_dist_avail_and_initialized() -> bool:
     if not dist.is_available():
         return False
-    if not dist.is_initialized():
-        return False
-    return True
+    return dist.is_initialized()
 
 
 def get_world_size() -> int:

@@ -54,7 +54,7 @@ def train_one_epoch(
         )
 
     for images, targets in metric_logger.log_every(data_loader, print_freq, header):
-        images = list(image.to(device) for image in images)
+        images = [image.to(device) for image in images]
         targets = [
             {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in t.items()}
             for t in targets
@@ -128,7 +128,7 @@ def evaluate(model: nn.Module, data_loader: Any, device: torch.device) -> CocoEv
         Sets model to eval mode and runs with inference_mode for efficiency.
     """
     n_threads = torch.get_num_threads()
-    # FIXME remove this and make paste_masks_in_image run on the GPU
+    # Force single-threaded to avoid issues with paste_masks_in_image on CPU.
     torch.set_num_threads(1)
     cpu_device = torch.device("cpu")
     model.eval()
@@ -140,7 +140,7 @@ def evaluate(model: nn.Module, data_loader: Any, device: torch.device) -> CocoEv
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
     for images, targets in metric_logger.log_every(data_loader, 100, header):
-        images = list(img.to(device) for img in images)
+        images = [img.to(device) for img in images]
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
@@ -150,7 +150,7 @@ def evaluate(model: nn.Module, data_loader: Any, device: torch.device) -> CocoEv
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
         model_time = time.time() - model_time
 
-        res = {target["image_id"]: output for target, output in zip(targets, outputs)}
+        res = {target["image_id"]: output for target, output in zip(targets, outputs, strict=False)}
         evaluator_time = time.time()
         coco_evaluator.update(res)
         evaluator_time = time.time() - evaluator_time

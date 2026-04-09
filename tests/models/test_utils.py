@@ -1,5 +1,7 @@
 """Unit tests for model utility functions."""
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -79,7 +81,7 @@ class TestBoxAccuracy:
     def test_empty_targets(self) -> None:
         """Test accuracy with empty target list."""
         preds = [np.array([0.0, 0.0, 10.0, 10.0])]
-        targets: list = []
+        targets: list[Any] = []
         accuracy = box_accuracy(preds, targets)
         assert accuracy == 0.0, f"Expected 0.0 for empty targets, got {accuracy}"
 

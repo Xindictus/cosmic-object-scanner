@@ -7,6 +7,8 @@ Tests validate:
 - Utility function correctness
 """
 
+from typing import Any
+
 import pytest
 
 pytestmark = pytest.mark.models
@@ -19,7 +21,7 @@ class TestFasterRCNNModel:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_fastercnn_model_initialization(self):
+    def test_fastercnn_model_initialization(self) -> None:
         """Test that Faster R-CNN model can be initialized."""
         try:
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import get_model
@@ -35,7 +37,9 @@ class TestFasterRCNNModel:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_fastercnn_forward_pass_train_mode(self, dummy_images_batch, dummy_targets):
+    def test_fastercnn_forward_pass_train_mode(
+        self, dummy_images_batch: Any, dummy_targets: Any
+    ) -> None:
         """Test forward pass in training mode."""
         try:
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import get_model
@@ -53,7 +57,7 @@ class TestFasterRCNNModel:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_fastercnn_forward_pass_eval_mode(self, dummy_images_batch):
+    def test_fastercnn_forward_pass_eval_mode(self, dummy_images_batch: Any) -> None:
         """Test forward pass in evaluation mode."""
         try:
             import torch
@@ -79,7 +83,7 @@ class TestFasterRCNNModel:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_fastercnn_output_shapes(self, dummy_image_tensor):
+    def test_fastercnn_output_shapes(self, dummy_image_tensor: Any) -> None:
         """Test output tensor shapes are correct."""
         try:
             import torch
@@ -108,19 +112,19 @@ class TestUtilityFunctions:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_calculate_iou(self):
+    def test_calculate_iou(self) -> None:
         """Test IoU calculation function."""
         try:
-            import torch
+            import numpy as np
 
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import calculate_iou
 
             # Test box format: [x1, y1, x2, y2]
-            box1 = torch.tensor([0.0, 0.0, 10.0, 10.0])
-            box2 = torch.tensor([5.0, 5.0, 15.0, 15.0])
+            box1 = np.array([0.0, 0.0, 10.0, 10.0], dtype=np.float32)
+            box2 = np.array([5.0, 5.0, 15.0, 15.0], dtype=np.float32)
 
             iou = calculate_iou(box1, box2)
-            assert isinstance(iou, torch.Tensor)
+            assert isinstance(iou, float)
             assert 0 <= iou <= 1  # IoU should be between 0 and 1
             assert iou > 0  # Overlapping boxes should have positive IoU
         except ImportError:
@@ -130,16 +134,16 @@ class TestUtilityFunctions:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_calculate_iou_identical_boxes(self):
+    def test_calculate_iou_identical_boxes(self) -> None:
         """Test IoU of identical boxes equals 1.0."""
         try:
-            import torch
+            import numpy as np
 
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import calculate_iou
 
-            box = torch.tensor([0.0, 0.0, 10.0, 10.0])
+            box = np.array([0.0, 0.0, 10.0, 10.0], dtype=np.float32)
             iou = calculate_iou(box, box)
-            assert torch.allclose(iou, torch.tensor(1.0), atol=1e-5)
+            assert abs(iou - 1.0) < 1e-5
         except ImportError:
             pytest.skip("Required dependencies not available")
 
@@ -147,7 +151,7 @@ class TestUtilityFunctions:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_calculate_iou_non_overlapping(self):
+    def test_calculate_iou_non_overlapping(self) -> None:
         """Test IoU of non-overlapping boxes equals 0.0."""
         try:
             import numpy as np
@@ -170,7 +174,7 @@ class TestDataTransforms:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_transforms_imported(self):
+    def test_transforms_imported(self) -> None:
         """Test that transforms module can be imported."""
         try:
             from cosmic_object_scanner.models import transforms
@@ -187,7 +191,7 @@ class TestCollateFunction:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_collate_function_exists(self):
+    def test_collate_function_exists(self) -> None:
         """Test that collate_fn is defined and callable."""
         try:
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import collate_fn
@@ -200,7 +204,7 @@ class TestCollateFunction:
         not pytest.importorskip("torch", minversion=None, reason="skip"),
         reason="PyTorch not available",
     )
-    def test_collate_function_batch(self, dummy_images_batch, dummy_targets):
+    def test_collate_function_batch(self, dummy_images_batch: Any, dummy_targets: Any) -> None:
         """Test collate function with batch data."""
         try:
             from cosmic_object_scanner.models.fasterrcnn_resnet50_fpn import collate_fn

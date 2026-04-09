@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cosmic-object-scanner"
-version = "0.1.0"
+version = "0.2.0"
 description = "Object detection for stellar objects (galaxies, nebulae, star clusters) using deep learning models"
 readme = "README.md"
 license = { text = "MIT" }
@@ -161,6 +161,11 @@ module = [
     "albumentations.*",
     "ultralytics.*",
     "seaborn.*",
+    "sklearn.*",
+    "tqdm",
+    "pandas",
+    "torchsummary",
+    "matplotlib.*",
 ]
 ignore_missing_imports = true
 
@@ -210,12 +215,3 @@ exclude_lines = [
 precision = 2
 skip_covered = false
 skip_empty = true
-
-[dependency-groups]
-dev = [
-    "black[jupyter]>=26.3.1",
-    "mypy>=1.20.0",
-    "pre-commit>=4.5.1",
-    "pytest>=9.0.2",
-    "ruff>=0.15.8",
-]

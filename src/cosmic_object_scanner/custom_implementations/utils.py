@@ -1,3 +1,5 @@
+from typing import Any
+
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,7 +8,25 @@ import torch
 from cosmic_object_scanner.custom_implementations.constants import device
 
 
-def iou(box1, box2, is_pred=True):
+def iou(box1: Any, box2: Any, is_pred: bool = True) -> torch.Tensor:
+    """Calculate Intersection over Union (IoU) between two bounding boxes.
+
+    Computes the IoU metric which measures the overlap between two bounding boxes.
+    Can handle both coordinate-based (prediction) and dimension-based (label) formats.
+
+    Args:
+        box1: First bounding box in [x, y, width, height] format.
+        box2: Second bounding box in [x, y, width, height] format.
+        is_pred: If True, treats as prediction vs label comparison with sigmoid/exp
+            transformations. If False, treats as width/height IoU calculation.
+            Default: True
+
+    Returns:
+        torch.Tensor: IoU score(s) between 0 and 1 representing overlap ratio.
+
+    Raises:
+        ValueError: If bounding boxes are not in correct format.
+    """
     if is_pred:
         # IoU score for prediction and label
         # box1 (prediction) and box2 (label) are both in [x, y, width, height] format
@@ -32,13 +52,13 @@ def iou(box1, box2, is_pred=True):
         intersection = (x2 - x1).clamp(0) * (y2 - y1).clamp(0)
 
         # Calculate the union area
-        box1_area = abs((b1_x2 - b1_x1) * (b1_y2 - b1_y1))
-        box2_area = abs((b2_x2 - b2_x1) * (b2_y2 - b2_y1))
+        box1_area = torch.abs((b1_x2 - b1_x1) * (b1_y2 - b1_y1))
+        box2_area = torch.abs((b2_x2 - b2_x1) * (b2_y2 - b2_y1))
         union = box1_area + box2_area - intersection
 
         # Calculate the IoU score
         epsilon = 1e-6
-        iou_score = intersection / (union + epsilon)
+        iou_score: torch.Tensor = intersection / (union + epsilon)
 
         # Return IoU score
         return iou_score
@@ -57,13 +77,34 @@ def iou(box1, box2, is_pred=True):
         union_area = box1_area + box2_area - intersection_area
 
         # Calculate IoU score
-        iou_score = intersection_area / union_area
+        iou_score_result: torch.Tensor = intersection_area / union_area
 
         # Return IoU score
-        return iou_score
+        return iou_score_result
 
 
-def nms(bboxes, iou_threshold, threshold):
+def nms(bboxes: list[Any], iou_threshold: float, threshold: float) -> list[Any]:
+    """Apply Non-Maximum Suppression to remove redundant bounding boxes.
+
+    Filters and removes overlapping bounding boxes, keeping only those with highest
+    confidence scores and minimal overlap as determined by IoU threshold.
+
+    Args:
+        bboxes: List of bounding boxes in format [class_id, confidence, x1, y1, x2, y2].
+        iou_threshold: Maximum IoU allowed between kept boxes. Boxes with IoU above
+            this threshold to a kept box are removed. Range: [0, 1].
+        threshold: Minimum confidence score to keep a bounding box. Boxes below
+            this threshold are filtered out initially.
+
+    Returns:
+        list: Filtered list of bounding boxes after NMS, maintaining format
+            [class_id, confidence, x1, y1, x2, y2].
+
+    Note:
+        - Bounding boxes are sorted by confidence in descending order before NMS
+        - First box from sorted list is always kept
+        - Overlapping boxes with lower confidence are removed
+    """
     # Filter out bounding boxes with confidence below the threshold.
     bboxes = [box for box in bboxes if box[1] > threshold]
     # Sort the bounding boxes by confidence in descending order.
@@ -88,17 +129,39 @@ def nms(bboxes, iou_threshold, threshold):
                     torch.tensor(box[2:]),
                 )
                 < iou_threshold
-            ):
-                # Check if box is not in bboxes_nms
-                if box not in bboxes_nms:
-                    # Add box to bboxes_nms
-                    bboxes_nms.append(box)
+            ) and box not in bboxes_nms:
+                # Add box to bboxes_nms
+                bboxes_nms.append(box)
 
     # Return bounding boxes after non-maximum suppression.
     return bboxes_nms
 
 
-def convert_cells_to_bboxes(predictions, anchors, s, is_predictions=True):
+def convert_cells_to_bboxes(
+    predictions: Any, anchors: Any, s: int, is_predictions: bool = True
+) -> list[Any]:
+    """Convert cell predictions to bounding box coordinates.
+
+    Converts YOLO-format cell predictions (with anchor boxes) into standard
+    bounding box coordinates. Handles both model predictions and ground truth labels.
+
+    Args:
+        predictions: Model output tensor of shape [batch_size, num_anchors, grid, grid, 5+classes]
+            where each cell contains [objectness, x, y, w, h, class_scores...].
+        anchors: Anchor box templates as tensor of shape [num_anchors, 2] with [width, height].
+        s: Grid size (e.g., 13, 26, 52 for YOLO multi-scale detection).
+        is_predictions: If True, applies sigmoid to objectness/x/y and exp to w/h.
+            If False, uses raw values. Default: True
+
+    Returns:
+        torch.Tensor: Bounding boxes of shape [batch_size, num_boxes, 6] where each box
+            contains [class_id, objectness, x1, y1, x2, y2] in normalized coordinates.
+
+    Note:
+        - Predictions are converted from cell coordinates to image coordinates
+        - Anchor boxes scale predictions to appropriate sizes
+        - Grid coordinates are denormalized to [0, s] range
+    """
     # Batch size used on predictions
     batch_size = predictions.shape[0]
     # Number of anchors
@@ -141,26 +204,26 @@ def convert_cells_to_bboxes(predictions, anchors, s, is_predictions=True):
     return converted_bboxes.tolist()
 
 
-def keep_prominent_boxes(boxes, iou_threshold, count_threshold):
+def keep_prominent_boxes(boxes: list[Any], iou_threshold: float, count_threshold: int) -> list[Any]:
     if len(boxes) == 0:
         return []
 
     # Convert boxes to numpy array for easier manipulation
-    boxes = np.array(boxes)
+    boxes_array: Any = np.array(boxes)
 
     # Extract coordinates and scores
-    x1 = boxes[:, 2] - boxes[:, 4] / 2
-    y1 = boxes[:, 3] - boxes[:, 5] / 2
-    x2 = boxes[:, 2] + boxes[:, 4] / 2
-    y2 = boxes[:, 3] + boxes[:, 5] / 2
-    labels = boxes[:, 0]
+    x1: Any = boxes_array[:, 2] - boxes_array[:, 4] / 2
+    y1: Any = boxes_array[:, 3] - boxes_array[:, 5] / 2
+    x2: Any = boxes_array[:, 2] + boxes_array[:, 4] / 2
+    y2: Any = boxes_array[:, 3] + boxes_array[:, 5] / 2
+    labels: Any = boxes_array[:, 0]
 
     # Initialize list of kept boxes
-    kept_boxes = []
+    kept_boxes: list[Any] = []
 
-    while len(boxes) > 0:
+    while len(boxes_array) > 0:
         # Pick the first box
-        current_box = boxes[0]
+        current_box = boxes_array[0]
         current_label = labels[0]
 
         current_x1 = x1[0]
@@ -200,17 +263,23 @@ def keep_prominent_boxes(boxes, iou_threshold, count_threshold):
             kept_boxes.append(current_box)
 
         # Remove the processed box and the similar boxes
-        boxes = boxes[1:][~similar_boxes_mask]
+        boxes_array = boxes_array[1:][~similar_boxes_mask]
         x1 = x1[1:][~similar_boxes_mask]
         y1 = y1[1:][~similar_boxes_mask]
         x2 = x2[1:][~similar_boxes_mask]
         y2 = y2[1:][~similar_boxes_mask]
         labels = labels[1:][~similar_boxes_mask]
 
-    return np.array(kept_boxes)
+    return kept_boxes
 
 
-def plot_image(image, boxes, class_labels, iou_threshold=0.5, count_threshold=5):
+def plot_image(
+    image: Any,
+    boxes: list[Any],
+    class_labels: list[str],
+    iou_threshold: float = 0.5,
+    count_threshold: int = 5,
+) -> None:
     # Apply the prominent boxes logic to filter boxes
     filtered_boxes = keep_prominent_boxes(boxes, iou_threshold, count_threshold)
 
@@ -266,10 +335,9 @@ def plot_image(image, boxes, class_labels, iou_threshold=0.5, count_threshold=5)
     # Display the plot
     plt.axis("off")
     plt.show()
-    return filtered_boxes
 
 
-def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
+def save_checkpoint(model: Any, optimizer: Any, filename: str = "my_checkpoint.pth.tar") -> None:
     print("==> Saving checkpoint")
     checkpoint = {
         "state_dict": model.state_dict(),
@@ -278,7 +346,7 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
     torch.save(checkpoint, filename)
 
 
-def load_checkpoint(checkpoint_file, model, optimizer, lr):
+def load_checkpoint(checkpoint_file: str, model: Any, optimizer: Any, lr: float) -> None:
     print("==> Loading checkpoint")
     checkpoint = torch.load(checkpoint_file, map_location=device)
     model.load_state_dict(checkpoint["state_dict"])

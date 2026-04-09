@@ -1,6 +1,7 @@
 """Pytest configuration and shared fixtures."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -23,7 +24,7 @@ def sample_image_path(data_dir: Path) -> Path:
 
 
 @pytest.fixture
-def sample_coco_annotation() -> dict:
+def sample_coco_annotation() -> dict[str, Any]:
     """Return sample COCO format annotation."""
     return {
         "info": {
@@ -60,7 +61,7 @@ def sample_coco_annotation() -> dict:
 
 
 @pytest.fixture
-def sample_yolo_annotation() -> dict:
+def sample_yolo_annotation() -> dict[str, Any]:
     """Return sample YOLO format annotation."""
     return {
         "yaml_config": {
@@ -76,7 +77,7 @@ def sample_yolo_annotation() -> dict:
 
 
 @pytest.fixture
-def dummy_image_tensor():
+def dummy_image_tensor() -> Any:
     """Return dummy image tensor for model testing."""
     try:
         import torch
@@ -87,7 +88,7 @@ def dummy_image_tensor():
 
 
 @pytest.fixture
-def dummy_images_batch():
+def dummy_images_batch() -> Any:
     """Return batch of dummy image tensors."""
     try:
         import torch
@@ -98,7 +99,7 @@ def dummy_images_batch():
 
 
 @pytest.fixture
-def dummy_targets():
+def dummy_targets() -> Any:
     """Return dummy targets for model testing."""
     try:
         import torch
@@ -119,7 +120,7 @@ def dummy_targets():
         pytest.skip("PyTorch not available")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Any, items: Any) -> None:
     """Mark all tests by default, allow filtering by marker."""
     for item in items:
         # Add markers for test categorization
@@ -131,7 +132,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 # Register custom markers
-def pytest_configure(config):
+def pytest_configure(config: Any) -> None:
     """Register custom markers for pytest."""
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line("markers", "integration: marks tests as integration tests")

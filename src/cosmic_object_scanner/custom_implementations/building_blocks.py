@@ -1,15 +1,21 @@
+"""Building blocks for neural network models."""
+
+from typing import Any
+
 import torch.nn as nn
 
 
 class CNNBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, use_batch_norm=True, **kwargs):
+    def __init__(
+        self, in_channels: int, out_channels: int, use_batch_norm: bool = True, **kwargs: Any
+    ) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, bias=not use_batch_norm, **kwargs)
         self.bn = nn.BatchNorm2d(out_channels)
         self.activation = nn.LeakyReLU(0.1)
         self.use_batch_norm = use_batch_norm
 
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         # Applying convolution
         x = self.conv(x)
         # Applying BatchNorm and activation if needed
@@ -21,11 +27,11 @@ class CNNBlock(nn.Module):
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, channels, use_residual=True, num_repeats=1):
+    def __init__(self, channels: int, use_residual: bool = True, num_repeats: int = 1) -> None:
         super().__init__()
 
         # Defining all the layers in a list and adding them based on number of repeats that is selected
-        res_layers = []
+        res_layers: list[Any] = []
         for _ in range(num_repeats):
             res_layers += [
                 nn.Sequential(
@@ -41,7 +47,7 @@ class ResidualBlock(nn.Module):
         self.use_residual = use_residual
         self.num_repeats = num_repeats
 
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         for layer in self.layers:
             residual = x
             x = layer(x)
@@ -52,7 +58,7 @@ class ResidualBlock(nn.Module):
 
 # Defining scale prediction class
 class ScalePrediction(nn.Module):
-    def __init__(self, in_channels, num_classes):
+    def __init__(self, in_channels: int, num_classes: int) -> None:
         super().__init__()
         # Defining the layers in the network
         self.pred = nn.Sequential(
@@ -65,7 +71,7 @@ class ScalePrediction(nn.Module):
 
     # Defining the forward pass and reshaping the output to the desired output
     # format: (batch_size, 3, grid_size, grid_size, num_classes + 5)
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         output = self.pred(x)
         output = output.view(x.size(0), 3, self.num_classes + 5, x.size(2), x.size(3))
         output = output.permute(0, 1, 3, 4, 2)

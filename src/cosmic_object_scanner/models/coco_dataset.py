@@ -1,18 +1,19 @@
 import os
+from typing import Any
 
 import torch
 from PIL import Image
 from pycocotools.coco import COCO
 
 
-class CocoDataset(torch.utils.data.Dataset):
-    def __init__(self, root, annotation, transforms=None):
+class CocoDataset(torch.utils.data.Dataset[tuple[Any, dict[str, Any]]]):
+    def __init__(self, root: str, annotation: str, transforms: Any = None) -> None:
         self.root = root
         self.coco = COCO(annotation)
         self.ids = sorted(self.coco.imgs.keys())
         self.transforms = transforms
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> tuple[Any, dict[str, Any]]:
         coco = self.coco
         img_id = self.ids[index]
         ann_ids = coco.getAnnIds(imgIds=img_id)
@@ -21,8 +22,8 @@ class CocoDataset(torch.utils.data.Dataset):
         img = Image.open(os.path.join(self.root, img_path)).convert("RGB")
 
         num_objs = len(anns)
-        boxes = []
-        labels = []
+        boxes: list[list[Any]] = []
+        labels: list[Any] = []
         for i in range(num_objs):
             xmin, ymin, width, height = anns[i]["bbox"]
 
@@ -35,17 +36,17 @@ class CocoDataset(torch.utils.data.Dataset):
         if len(boxes) == 0:
             return self.__getitem__((index + 1) % len(self.ids))
 
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        labels = torch.as_tensor(labels, dtype=torch.int64)
+        boxes_tensor = torch.as_tensor(boxes, dtype=torch.float32)
+        labels_tensor = torch.as_tensor(labels, dtype=torch.int64)
 
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
+        target: dict[str, Any] = {}
+        target["boxes"] = boxes_tensor
+        target["labels"] = labels_tensor
 
         if self.transforms:
             img = self.transforms(img)
 
         return img, target
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ids)

@@ -17,7 +17,7 @@ def move_images(data: dict[str, Any], source_dir: str, target_dir: str) -> None:
 
 
 def filter_data(data: dict[str, Any], ids: list[int]) -> dict[str, Any]:
-    filtered_data = {k: [] for k in data}
+    filtered_data: dict[str, Any] = {k: [] for k in data}
     image_ids = set(ids)
 
     for img in data["images"]:

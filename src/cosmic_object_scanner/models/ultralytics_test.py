@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Any
 
 import cv2
 import matplotlib.pyplot as plt
@@ -14,11 +15,11 @@ NUM_CLASSES = 3
 CLASS_NAMES = ["Galaxy", "Nebula", "Star Cluster"]
 
 
-def get_class(category_id):
+def get_class(category_id: int) -> str:
     return {0: "Galaxy", 1: "Nebula", 2: "Star Cluster"}[category_id]
 
 
-def draw_boxes(image, predictions, threshold=0.5):
+def draw_boxes(image: Any, predictions: Any, threshold: float = 0.5) -> Any:
     for pred in predictions:
         bbox = pred[:4]  # x1, y1, x2, y2
         confidence = pred[4]
@@ -37,7 +38,7 @@ def draw_boxes(image, predictions, threshold=0.5):
     return image
 
 
-def plot_some_predictions(model):
+def plot_some_predictions(model: Any) -> None:
     imgs_path = f"{CURRENT_DIR}/../data/yolo/visualize_predictions"
     predictions = model.predict(imgs_path)
 
@@ -61,7 +62,9 @@ def plot_some_predictions(model):
 
 
 # Function to match predictions and ground truth
-def match_predictions(ground_truths, predictions, iou_threshold=0.5):
+def match_predictions(
+    ground_truths: Any, predictions: Any, iou_threshold: float = 0.5
+) -> tuple[int, int, int]:
     true_positives = 0
     false_positives = 0
     false_negatives = 0
@@ -70,7 +73,7 @@ def match_predictions(ground_truths, predictions, iou_threshold=0.5):
         path = prediction.path
         basename = os.path.basename(path)
 
-        matched_annotations = set()
+        matched_annotations: set[int] = set()
 
         ground_truth = ground_truths[basename[:-4]]
         boxes = prediction.boxes.data.cpu().numpy()
@@ -105,18 +108,20 @@ def match_predictions(ground_truths, predictions, iou_threshold=0.5):
 
 
 # Function to calculate accuracy
-def calculate_accuracy(true_positives, false_positives, false_negatives):
+def calculate_accuracy(
+    true_positives: int, false_positives: int, false_negatives: int
+) -> tuple[float, float, float]:
     total_predictions = true_positives + false_positives
     total_annotations = true_positives + false_negatives
 
     if total_predictions == 0 or total_annotations == 0:
-        return 0.0
+        return 0.0, 0.0, 0.0
 
     precision = true_positives / total_predictions
     recall = true_positives / total_annotations
 
     if precision + recall == 0:
-        return 0.0
+        return 0.0, 0.0, 0.0
 
     f1_score = 2 * (precision * recall) / (precision + recall)
 
@@ -124,7 +129,9 @@ def calculate_accuracy(true_positives, false_positives, false_negatives):
 
 
 # Function to create confusion matrix
-def create_confusion_matrix(ground_truths, predictions, num_classes, iou_threshold=0.5):
+def create_confusion_matrix(
+    ground_truths: Any, predictions: Any, num_classes: int, iou_threshold: float = 0.5
+) -> Any:
     # Initialize confusion matrix
     confusion_matrix = np.zeros((num_classes, num_classes), dtype=int)
 
@@ -132,7 +139,7 @@ def create_confusion_matrix(ground_truths, predictions, num_classes, iou_thresho
         path = prediction.path
         basename = os.path.basename(path)
 
-        matched_annotations = set()
+        matched_annotations: set[int] = set()
 
         ground_truth = ground_truths[basename[:-4]]
         boxes = prediction.boxes.data.cpu().numpy()
@@ -170,7 +177,7 @@ def create_confusion_matrix(ground_truths, predictions, num_classes, iou_thresho
     return confusion_matrix
 
 
-def plot_confusion_matrix(confusion_matrix, class_names):
+def plot_confusion_matrix(confusion_matrix: Any, class_names: list[str]) -> None:
     df_cm = pd.DataFrame(confusion_matrix, index=class_names, columns=class_names)
     print(df_cm)
     plt.figure(figsize=(10, 8))
@@ -200,28 +207,28 @@ def plot_confusion_matrix(confusion_matrix, class_names):
 
 
 # Function to calculate Intersection over Union (IoU)
-def calculate_iou(box1, box2):
+def calculate_iou(box1: Any, box2: Any) -> float:
     # Calculate coordinates of intersection rectangle
-    x1 = max(box1[0], box2[0])
-    y1 = max(box1[1], box2[1])
-    x2 = min(box1[2], box2[2])
-    y2 = min(box1[3], box2[3])
+    x1: float = max(box1[0], box2[0])
+    y1: float = max(box1[1], box2[1])
+    x2: float = min(box1[2], box2[2])
+    y2: float = min(box1[3], box2[3])
 
     # Calculate area of intersection rectangle
-    intersection_area = max(0, x2 - x1 + 1) * max(0, y2 - y1 + 1)
+    intersection_area: float = max(0, x2 - x1 + 1) * max(0, y2 - y1 + 1)
 
     # Calculate area of both bounding boxes
-    box1_area = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
-    box2_area = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
+    box1_area: float = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
+    box2_area: float = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
 
     # Calculate IoU
-    iou = intersection_area / float(box1_area + box2_area - intersection_area)
+    iou: float = intersection_area / float(box1_area + box2_area - intersection_area)
     return iou
 
 
 # Function to parse YOLO format label file
-def parse_yolo_label(label_file, img_width, img_height):
-    annotations = []
+def parse_yolo_label(label_file: str, img_width: int, img_height: int) -> list[dict[str, Any]]:
+    annotations: list[dict[str, Any]] = []
 
     with open(label_file) as f:
         lines = f.readlines()
@@ -237,7 +244,7 @@ def parse_yolo_label(label_file, img_width, img_height):
     return annotations
 
 
-def main(args):
+def main(args: Any) -> None:
     # Path to your pretrained model
     model_path = f"{CURRENT_DIR}/saved/{args.model}"
     test_img_path = f"{CURRENT_DIR}/../data/{args.test_img}"
@@ -305,7 +312,7 @@ if __name__ == "__main__":
         help="Path to the test images dir for inference",
     )
     parser.add_argument(
-        "-tl", "---test-lbl", type=str, required=True, help="Path to the test labels dir"
+        "-tl", "--test-lbl", type=str, required=True, help="Path to the test labels dir"
     )
 
     # Parse command line arguments

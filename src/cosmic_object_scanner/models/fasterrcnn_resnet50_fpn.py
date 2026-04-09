@@ -4,6 +4,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -30,7 +31,7 @@ MODEL_PATH = f"{CURRENT_DIR}/fasterrcnn_resnet50_fpn_{EPOCHS}_{BATCH_SIZE}.pth"
 CLASS_NAMES = ["Galaxy", "Nebula", "Star Cluster"]
 
 
-def calculate_iou(bb1: np.ndarray, bb2: np.ndarray) -> float:
+def calculate_iou(bb1: npt.NDArray[Any], bb2: npt.NDArray[Any]) -> float:
     """Calculate the Intersection over Union (IoU) of two bounding boxes.
 
     Args:
@@ -69,15 +70,15 @@ def calculate_iou(bb1: np.ndarray, bb2: np.ndarray) -> float:
     # compute the intersection over union by taking the intersection
     # area and dividing it by the sum of prediction + ground-truth
     # areas - the intersection area
-    iou = intersection_area / float(bb1_area + bb2_area - intersection_area)
-    assert iou >= 0.0
-    assert iou <= 1.0
-    return iou
+    iou_value: float = float(intersection_area / float(bb1_area + bb2_area - intersection_area))
+    assert iou_value >= 0.0
+    assert iou_value <= 1.0
+    return iou_value
 
 
 def box_accuracy(
-    preds: list[np.ndarray],
-    targets: list[np.ndarray],
+    preds: list[npt.NDArray[Any]],
+    targets: list[npt.NDArray[Any]],
     iou_threshold: float = 0.5,
 ) -> float:
     """Calculate bounding box accuracy based on IoU threshold.
@@ -130,9 +131,9 @@ def plot_learning_curve(train_loss: list[float], train_classifier_loss: list[flo
 
 
 def plot_roc_curve(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    y_score: np.ndarray,
+    y_true: npt.NDArray[Any],
+    y_pred: npt.NDArray[Any],
+    y_score: npt.NDArray[Any],
 ) -> None:
     """Plot Receiver Operating Characteristic (ROC) curves for each class.
 
@@ -145,9 +146,9 @@ def plot_roc_curve(
     all_labels_bin = label_binarize(y_true, classes=np.arange(num_classes))
 
     # ROC Curve and AUC for each class
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
+    fpr = {}
+    tpr = {}
+    roc_auc = {}
 
     for i in range(num_classes):
         fpr[i], tpr[i], _ = roc_curve(all_labels_bin[:, i], y_score)
@@ -169,7 +170,7 @@ def plot_roc_curve(
             "grey",
         ]
     )
-    for i, color in zip(range(num_classes), colors):
+    for i, color in zip(range(num_classes), colors, strict=False):
         plt.plot(
             fpr[i],
             tpr[i],
@@ -186,7 +187,7 @@ def plot_roc_curve(
     plt.show()
 
 
-def print_classification_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> None:
+def print_classification_matrix(y_true: npt.NDArray[Any], y_pred: npt.NDArray[Any]) -> None:
     """Print classification report with per-class metrics.
 
     Args:
@@ -194,20 +195,20 @@ def print_classification_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> None:
         y_pred: Predicted labels.
     """
     print("**************************************")
-    # CC = CLASS_NAMES + ['background']
-    CC = CLASS_NAMES
-    class_report = classification_report(y_true, y_pred, target_names=CC)
+    # cc = CLASS_NAMES + ['background']
+    cc = CLASS_NAMES
+    class_report = classification_report(y_true, y_pred, target_names=cc)
     print("Classification Report:")
     print(class_report)
     print("**************************************")
 
 
 def match_predictions_to_ground_truths(
-    pred_boxes: list[np.ndarray],
-    true_boxes: list[np.ndarray],
+    pred_boxes: list[npt.NDArray[Any]],
+    true_boxes: list[npt.NDArray[Any]],
     pred_labels: list[int],
     true_labels: list[int],
-    pred_scores: np.ndarray,
+    pred_scores: npt.NDArray[Any],
     iou_threshold: float = 0.5,
 ) -> tuple[list[int], list[int], list[float]]:
     """Match predicted boxes to ground truth boxes using IoU threshold.
@@ -228,19 +229,19 @@ def match_predictions_to_ground_truths(
     """
     # Sort predictions by scores in descending order
     sorted_indices = np.argsort(pred_scores)[::-1]
-    pred_boxes = [pred_boxes[i] for i in sorted_indices]
-    pred_labels = [pred_labels[i] for i in sorted_indices]
-    pred_scores = [pred_scores[i] for i in sorted_indices]
+    pred_boxes_sorted: list[npt.NDArray[Any]] = [pred_boxes[int(i)] for i in sorted_indices]
+    pred_labels_sorted: list[int] = [pred_labels[int(i)] for i in sorted_indices]
+    pred_scores_sorted: list[float] = [float(pred_scores[int(i)]) for i in sorted_indices]
 
-    matched_pred_labels = []
-    matched_true_labels = []
-    matched_scores = []
-    used_pred_indices = set()
+    matched_pred_labels: list[int] = []
+    matched_true_labels: list[int] = []
+    matched_scores: list[float] = []
+    used_pred_indices: set[int] = set()
 
     for true_idx, true_box in enumerate(true_boxes):
-        best_iou = 0
-        best_pred_idx = -1
-        for pred_idx, pred_box in enumerate(pred_boxes):
+        best_iou: float = 0
+        best_pred_idx: int = -1
+        for pred_idx, pred_box in enumerate(pred_boxes_sorted):
             if pred_idx in used_pred_indices:
                 continue
             iou = calculate_iou(true_box, pred_box)
@@ -250,21 +251,21 @@ def match_predictions_to_ground_truths(
 
         if best_pred_idx >= 0:
             used_pred_indices.add(best_pred_idx)
-            matched_pred_labels.append(pred_labels[best_pred_idx])
-            matched_scores.append(pred_scores[best_pred_idx])
+            matched_pred_labels.append(pred_labels_sorted[best_pred_idx])
+            matched_scores.append(pred_scores_sorted[best_pred_idx])
             matched_true_labels.append(true_labels[true_idx])
         else:
             # Assuming 0 is the 'no object' class
             matched_pred_labels.append(0)
             # Assuming 0 is the score for 'no object'
-            matched_scores.append(0)
+            matched_scores.append(0.0)
             matched_true_labels.append(true_labels[true_idx])
 
     return matched_pred_labels, matched_true_labels, matched_scores
 
 
-def collate_fn(batch: list[Any]) -> tuple[Any, Any]:
-    """Custom collate function for DataLoader.
+def collate_fn(batch: list[Any]) -> tuple[tuple[Any, ...], ...]:
+    """Custom collate function  for DataLoader.
 
     Args:
         batch: List of samples from dataset.
@@ -272,7 +273,7 @@ def collate_fn(batch: list[Any]) -> tuple[Any, Any]:
     Returns:
         Tuple of (images, targets) unpacked from batch.
     """
-    return tuple(zip(*batch))
+    return tuple(zip(*batch, strict=False))
 
 
 # Function to get the model
@@ -286,15 +287,15 @@ def get_model(num_classes: int) -> nn.Module:
         Adapted Faster R-CNN model with custom classifier head.
     """
     # Load a model pre-trained on COCO
-    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
+    model: nn.Module = torchvision.models.detection.fasterrcnn_resnet50_fpn(
         # model = torchvision.models.detection.fasterrcnn_resnet50_fpn_v2(
         weights="DEFAULT",
         # pretrained=True
     )
     # get number of input features for the classifier
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    in_features = model.roi_heads.box_predictor.cls_score.in_features  # type: ignore[union-attr]
     # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)  # type: ignore[union-attr]
     return model
 
 
@@ -390,7 +391,7 @@ def test_model(
             images = [img.to(device) for img in images]
             outputs = model(images)
 
-            for target, output in zip(targets, outputs):
+            for target, output in zip(targets, outputs, strict=False):
                 all_labels.append(target["labels"].cpu().numpy())
                 all_preds.append(output["labels"].cpu().numpy())
                 all_scores.append(output["scores"].cpu().numpy())
@@ -434,12 +435,19 @@ def test_model(
 
     plot_learning_curve(train_loss, train_classifier_loss)
 
-    plot_roc_curve(y_true, y_pred, y_score)
+    plot_roc_curve(np.array(y_true), np.array(y_pred), np.array(y_score))
 
-    print_classification_matrix(y_true, y_pred)
+    print_classification_matrix(np.array(y_true), np.array(y_pred))
+
+    return {
+        "box_accuracy": float(box_acc),
+        "y_true": y_true,
+        "y_pred": y_pred,
+        "y_score": y_score,
+    }
 
 
-def main():
+def main() -> None:
     # 3 classes (galaxy, nebula, star-cluster) + background
     num_classes = 4
 

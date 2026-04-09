@@ -7,7 +7,7 @@ import pytest
 class TestCocoDataset:
     """Test suite for CocoDataset."""
 
-    def test_imports(self):
+    def test_imports(self) -> None:
         """Test that model imports work."""
         # Verify modules can be imported
         try:
@@ -22,7 +22,7 @@ class TestCocoDataset:
 class TestTransforms:
     """Test suite for transforms module."""
 
-    def test_imports(self):
+    def test_imports(self) -> None:
         """Test that transforms imports work."""
         try:
             from cosmic_object_scanner.models import transforms
@@ -37,7 +37,7 @@ class TestTransforms:
 class TestVisualization:
     """Test suite for visualization module."""
 
-    def test_imports(self):
+    def test_imports(self) -> None:
         """Test that visualization imports work."""
         try:
             from cosmic_object_scanner.models import visualization
@@ -51,7 +51,7 @@ class TestVisualization:
 class TestFasterRCNN:
     """Test suite for Faster R-CNN model."""
 
-    def test_imports(self):
+    def test_imports(self) -> None:
         """Test that fasterrcnn model imports work."""
         try:
             from cosmic_object_scanner.models import fasterrcnn_resnet50_fpn
@@ -67,7 +67,7 @@ class TestFasterRCNN:
 class TestEngine:
     """Test suite for training engine."""
 
-    def test_imports(self):
+    def test_imports(self) -> None:
         """Test that engine imports work."""
         try:
             from cosmic_object_scanner.models import engine

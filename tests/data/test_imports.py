@@ -1,5 +1,7 @@
 """Tests for data utilities module."""
 
+from typing import Any
+
 import pytest
 
 
@@ -7,10 +9,10 @@ import pytest
 class TestDataUtilities:
     """Test suite for data utilities."""
 
-    def test_split_coco_imports(self):
+    def test_split_coco_imports(self) -> None:
         """Test that split_coco module imports."""
         try:
-            from cosmic_object_scanner.data import split_coco
+            from cosmic_object_scanner.data import split_coco  # noqa: F401
             from cosmic_object_scanner.data.split_coco import filter_data, move_images
 
             # Module should have key functions
@@ -19,10 +21,10 @@ class TestDataUtilities:
         except ImportError as e:
             pytest.skip(f"Import failed: {e}")
 
-    def test_split_yolo_imports(self):
+    def test_split_yolo_imports(self) -> None:
         """Test that split_yolo module imports."""
         try:
-            from cosmic_object_scanner.data import split_yolo
+            from cosmic_object_scanner.data import split_yolo  # noqa: F401
             from cosmic_object_scanner.data.split_yolo import main
 
             # Module should have key functions
@@ -30,10 +32,10 @@ class TestDataUtilities:
         except ImportError as e:
             pytest.skip(f"Import failed: {e}")
 
-    def test_annot_explore_imports(self):
+    def test_annot_explore_imports(self) -> None:
         """Test that annot_explore module imports."""
         try:
-            from cosmic_object_scanner.data import annot_explore
+            from cosmic_object_scanner.data import annot_explore  # noqa: F401
             from cosmic_object_scanner.data.annot_explore import main
 
             # Module should have key functions
@@ -46,7 +48,7 @@ class TestDataUtilities:
 class TestCocoFormat:
     """Test suite for COCO format utilities."""
 
-    def test_coco_annotation_structure(self, sample_coco_annotation):
+    def test_coco_annotation_structure(self, sample_coco_annotation: Any) -> None:
         """Test COCO annotation has required structure."""
         assert "images" in sample_coco_annotation
         assert "annotations" in sample_coco_annotation
@@ -79,7 +81,7 @@ class TestCocoFormat:
 class TestYoloFormat:
     """Test suite for YOLO format utilities."""
 
-    def test_yolo_annotation_structure(self, sample_yolo_annotation):
+    def test_yolo_annotation_structure(self, sample_yolo_annotation: Any) -> None:
         """Test YOLO annotation has required structure."""
         assert "yaml_config" in sample_yolo_annotation
         assert "annotations" in sample_yolo_annotation

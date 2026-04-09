@@ -219,7 +219,7 @@ for images, targets in dataloader:
 ### YOLO Format (TensorFlow)
 
 ```python
-from cosmic_object_scanner.custom_implementations.yolo.Data_utils import YoloDataLoader
+from cosmic_object_scanner.custom_implementations.data_utils import YoloDataLoader
 
 # Load YOLO dataset
 train_loader = YoloDataLoader(
@@ -260,7 +260,7 @@ val_transforms = get_transform(train=False)
 
 ### Custom Augmentation (YOLO)
 
-Implemented in `Data_utils.py`:
+Implemented in `data_utils.py`:
 
 - Random horizontal/vertical flips
 - Random brightness/contrast adjustment
