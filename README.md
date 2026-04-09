@@ -28,7 +28,7 @@ git clone <repo-url>
 cd cosmic-object-scanner
 
 # Install with uv (fast Python package manager)
-uv sync --dev
+uv sync --extra dev
 
 # Run tests to verify installation
 uv run pytest tests/ -v
@@ -120,7 +120,7 @@ UV is a fast Python package manager with lock file reproducibility:
 
 ```bash
 # Install all dependencies (including dev tools)
-uv sync --dev
+uv sync --extra dev
 
 # Run any command with automatic environment
 uv run python script.py

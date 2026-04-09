@@ -23,7 +23,7 @@ Quick start:
 ```bash
 git clone <repo-url>
 cd cosmic-object-scanner
-uv sync --dev
+uv sync --extra dev
 uv run pre-commit install
 ```
 

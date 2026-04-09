@@ -20,7 +20,7 @@ cd cosmic-object-scanner
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install dependencies
-uv sync --dev
+uv sync --extra dev
 
 # Verify installation
 uv run python --version

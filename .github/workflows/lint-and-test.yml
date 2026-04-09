@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies and dev tools
         run: |
-          uv sync --dev
+          uv sync --extra dev
 
       - name: Ruff linting
         run: |

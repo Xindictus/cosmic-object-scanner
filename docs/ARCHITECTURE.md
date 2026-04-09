@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
 ```bash
 # 1. Setup environment
-uv sync --dev
+uv sync --extra dev
 
 # 2. Create feature branch
 git checkout -b feature/my-feature
