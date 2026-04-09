@@ -1,0 +1,217 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cosmic-object-scanner"
+version = "0.2.0"
+description = "Object detection for stellar objects (galaxies, nebulae, star clusters) using deep learning models"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Konstantinos Vytiniotis", email = "konstantinos.vytiniotis@outlook.com" },
+    { name = "Christos Foukanelis", email = "christosfouk@yahoo.com" }
+]
+requires-python = ">=3.12"
+
+dependencies = [
+    # Deep Learning Frameworks
+    "torch>=2.0.0",
+    "torchvision>=0.17.0",
+    "tensorflow>=2.13.0",
+    # Computer Vision
+    "opencv-python>=4.8.0",
+    "Pillow>=10.0.0",
+    "albumentations>=1.3.0",
+    # Object Detection
+    "ultralytics>=8.0.0",
+    "pycocotools>=2.0.7",
+    # Data Science & ML
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    # Visualization
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    # Utilities
+    "tqdm>=4.66.0",
+    "pretty-confusion-matrix>=0.6.0",
+    "torchsummary>=1.5.1",
+    "black[jupyter]>=26.3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Linting & Formatting
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+
+    # Type Checking
+    "mypy>=1.7.0",
+    "types-requests",
+    "types-PyYAML",
+
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+
+    # Pre-commit
+    "pre-commit>=3.5.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cosmic_object_scanner"]
+
+# ============================================================================
+# Ruff Configuration (Fast Python Linter)
+# ============================================================================
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    "*.egg-info",
+    ".env",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "C4",     # flake8-comprehensions
+    "B",      # flake8-bugbear
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # Line too long (let black handle)
+    "B008",   # Function call in default argument
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cosmic_object_scanner"]
+
+# ============================================================================
+# Black Configuration (Code Formatter)
+# ============================================================================
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | \.eggs
+  | __pycache__
+)/
+'''
+
+# ============================================================================
+# isort Configuration (Import Sorting)
+# ============================================================================
+[tool.isort]
+profile = "black"
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 100
+skip = [".gitignore", ".dockerignore"]
+known_first_party = ["cosmic_object_scanner"]
+
+# ============================================================================
+# MyPy Configuration (Type Checker)
+# ============================================================================
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = [
+    "cv2",
+    "torch.nn",
+    "torchvision.*",
+    "tensorflow.*",
+    "pycocotools.*",
+    "albumentations.*",
+    "ultralytics.*",
+    "seaborn.*",
+    "sklearn.*",
+    "tqdm",
+    "pandas",
+    "torchsummary",
+    "matplotlib.*",
+]
+ignore_missing_imports = true
+
+# ============================================================================
+# Pytest Configuration
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "unit: unit tests",
+    "integration: integration tests",
+    "models: model-specific tests",
+]
+minversion = "7.0"
+
+# ============================================================================
+# Coverage Configuration
+# ============================================================================
+[tool.coverage.run]
+source = ["src/cosmic_object_scanner"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__main__.py",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+precision = 2
+skip_covered = false
+skip_empty = true

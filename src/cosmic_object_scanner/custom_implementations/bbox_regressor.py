@@ -1,0 +1,23 @@
+"""Bounding box regressor implementations."""
+
+import tensorflow as tf
+
+
+def build_regressor(inputs: tf.keras.Input, input_size: int = 608) -> tf.Tensor:
+    x = tf.keras.layers.Conv2D(
+        16, kernel_size=3, activation="relu", input_shape=(input_size, input_size, 1)
+    )(inputs)
+    x = tf.keras.layers.AveragePooling2D(2, 2)(x)
+
+    x = tf.keras.layers.Conv2D(32, kernel_size=3, activation="relu")(x)
+    x = tf.keras.layers.AveragePooling2D(2, 2)(x)
+
+    x = tf.keras.layers.Conv2D(64, kernel_size=3, activation="relu")(x)
+    x = tf.keras.layers.AveragePooling2D(2, 2)(x)
+
+    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.Dense(64, activation="relu")(x)
+
+    x = tf.keras.layers.Dense(units=4)(x)
+
+    return x

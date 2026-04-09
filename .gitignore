@@ -167,3 +167,5 @@ model_from_stratch/yolo/checkpoint.pth.tar
 *.jpg
 *.txt
 *.pt
+.vscode
+.ruff_cache
