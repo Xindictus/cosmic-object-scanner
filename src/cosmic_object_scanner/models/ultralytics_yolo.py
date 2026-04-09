@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from ultralytics import YOLO
+from ultralytics import YOLO  # type: ignore[attr-defined]
 
 
 def train_yolov8(

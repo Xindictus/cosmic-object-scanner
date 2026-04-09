@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from ultralytics import YOLO
+from ultralytics import YOLO  # type: ignore[attr-defined]
 
 # Define PY script folder
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))

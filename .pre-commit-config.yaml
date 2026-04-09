@@ -72,6 +72,7 @@ repos:
             "torch",
             "torchvision",
             "tensorflow",
+            "ultralytics",
           ]
         exclude: "^(tests/|data/|models/|experimental/)"
         language_version: python3.12
